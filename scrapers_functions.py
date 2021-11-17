@@ -3,7 +3,7 @@
 from selenium.common.exceptions import NoSuchElementException, NoSuchFrameException, ElementNotInteractableException, \
     JavascriptException
 from selenium import webdriver
-from selenium.webdriver.common.action_chains import ActionChains as actions
+from selenium.webdriver.common.action_chains import ActionChains
 import functions as func
 from video_class import Video
 import time
@@ -11,44 +11,47 @@ from datetime import date
 from datetime import datetime
 from random import randint
 import re
+import os
 import video_class
 
+"""
+chromedriver = os.getcwd() + "/chromedriver"
+os.environ["webdriver.chrome.driver"] = chromedriver
+driver = webdriver.Chrome(chromedriver)
+"""
 
-# <codecell>
 
 def save_basic_scraper_for_recovery(i, video_list, failed_videos, save_every, verbose, force=False):
     if save_every != 0 or force:
         if len(video_list) % save_every == 0 or force:
             func.pickle_video_list(video_list,
-                                   path='C:/Users/Tommer/Google Drive/Data science/Projects/Youtube Predictor/Data_colection_prepro/data recovery',
+                                   path=os.getcwd() + '\\Data_colection_prepro\\data recovery',
                                    file_name=f'{video_list[0].channel_name}-basic_video_recovery{date.today()}')
-            if verbose: print('saved video list for recovery')
+            if verbose:
+                print('saved video list for recovery')
 
         if len(failed_videos) != 0 or force:
             func.pickle_video_list(failed_videos,
-                                   path='C:/Users/Tommer/Google Drive/Data science/Projects/Youtube Predictor/Data_colection_prepro/data recovery',
+                                   path=os.getcwd() + '\\Data_colection_prepro\\data recovery',
                                    file_name=f'{failed_videos[0].channel_name}-basic_failed_video_recovery{date.today()}')
-            if verbose: print('saved failed videos for recovery')
+            if verbose:
+                print('saved failed videos for recovery')
 
-
-# <codecell>
 
 def basic_scraper_input_check(channel_link, num_videos, verbose, headless, time_out, recovery_save_every):
     if channel_link == '' or type(channel_link) != str:
         raise Exception(f'channel_link can not be empty and must be a string, instead got {channel_link}')
     elif num_videos < 0 or type(num_videos) != int:
         raise Exception(f'num_videos must be a positive integer, instead got: {num_videos}')
-    elif verbose != True and verbose != False:
+    elif not verbose and verbose:
         raise Exception(f'verbose must be True or False, instead got: {verbose}')
-    elif headless != True and headless != False:
+    elif not headless and headless:
         raise Exception(f'headless must be True or False, instead got: {headless}')
     elif time_out == 0 or type(time_out) != int:
         raise Exception(f'time_out must be a integer and not 0 , instead got: {time_out}')
     elif recovery_save_every < 0 or type(recovery_save_every) != int:
         raise Exception(f'recovery_save_every must be a positive integer, instead got: {recovery_save_every}')
 
-
-# <codecell>
 
 def generate_ID(link, i):
     result = -1
@@ -62,8 +65,6 @@ def generate_ID(link, i):
         return result
 
 
-# <codecell>
-
 def link_to_name(link):
     remove_list = ['https://www.youtube.com/c/', '/videos']
 
@@ -73,8 +74,6 @@ def link_to_name(link):
 
     return link
 
-
-# <codecell>
 
 def assign_basic_values(channel_link, title, link, thumbnail, length, stream, i):
     # create Video object
@@ -88,8 +87,6 @@ def assign_basic_values(channel_link, title, link, thumbnail, length, stream, i)
 
     return temp_video
 
-
-# <codecell>
 
 def basic_scraper_report(video_list, failed_videos, num_videos, total_time):
     missing_values = check_missing_data(video_list, transcript=False, comments=False, views=False, likes=False,
@@ -105,22 +102,18 @@ def basic_scraper_report(video_list, failed_videos, num_videos, total_time):
     print(f'{50 * "_"}')
 
 
-# <codecell>
-
 def set_driver(headless, window_size):
     options = webdriver.ChromeOptions()
     options.add_argument("--disable-gpu")
     options.add_argument("--mute-audio")
     if headless:
         options.add_argument('headless')
-    driver = webdriver.Chrome(executable_path="Drivers/chromedriver.exe", options=options)
+    driver = webdriver.Chrome(executable_path="drivers/chromedriver.exe", options=options)
     driver.set_window_size(window_size[0], window_size[1])
     time.sleep(1)
 
     return driver
 
-
-# <codecell>
 
 def driver_reset(driver, verbose, batch_size, sleep_seed, headless, reset_counter, window_size=list):
     reset_counter += 1
@@ -138,8 +131,6 @@ def driver_reset(driver, verbose, batch_size, sleep_seed, headless, reset_counte
     return driver, reset_counter
 
 
-# <codecell>
-
 def basic_scraper_timeout(verbose, start_time, time_out):
     if time.time() - start_time >= time_out:
 
@@ -155,8 +146,6 @@ def basic_scraper_timeout(verbose, start_time, time_out):
     return result
 
 
-# <codecell>
-
 def length_converter(length, verbose):
     try:
         if len(length) >= 6:
@@ -170,13 +159,12 @@ def length_converter(length, verbose):
 
     except Exception as e:
         print(e)
-        if verbose: print('length conversion failed')
+        if verbose:
+            print('length conversion failed')
         return length
 
 
-# <codecell>
-
-def print_cellected(verbose, video, collected_successfully, print_level='all'):
+def print_collected(verbose, video, collected_successfully, print_level='all'):
     if verbose == 0:
         return None
 
@@ -211,7 +199,21 @@ def print_cellected(verbose, video, collected_successfully, print_level='all'):
         raise ValueError(f'print_level incorrect, got: {print_level}')
 
 
-# <codecell>
+def click_intro_agree_button_basic(driver, verbose, sleep_seed):
+    try:  # try to click on the intro agree button that appears sometimes
+        if verbose > 2:
+            print('intro agree button click attempt')
+
+        time.sleep(sleep_seed * 0.1)  # short wait to avoid detection
+        element = driver.find_element_by_xpath(
+            '//*[@id="yDmH0d"]/c-wiz/div/div/div/div[2]/div[1]/div[4]/form/div/div/button')  # set element to button
+        action = ActionChains(driver)
+        action.move_to_element(element).perform()  # move cursor to element
+        element.click()  # click on button
+
+    except NoSuchElementException:
+        if verbose > 2:
+            print('fail click on intro agree button basic NoSuchElementException')
 
 
 def get_basic_data(driver, i, verbose, time_out):
@@ -265,8 +267,6 @@ def get_basic_data(driver, i, verbose, time_out):
     return title, link, thumbnail, length, stream, collected_successfully
 
 
-# <codecell>
-
 def validate_individual_scraper_input(video_list, verbose, headless, batch_size, sleep_seed, recursion_counter):
     if type(video_list) != list:
         raise Exception(f'video_list and must be a list, instead got {type(video_list)}')
@@ -278,7 +278,7 @@ def validate_individual_scraper_input(video_list, verbose, headless, batch_size,
 
     if verbose not in [0, 1, 2, 3]:
         raise Exception(f'verbose must be 0, 1, 2 or 3, instead got: {verbose}')
-    elif headless == False and headless != False:
+    elif not headless and headless:
         raise Exception(f'headless must be True or False, instead got: {headless}')
     elif sleep_seed == 0 or type(sleep_seed) != int:
         raise Exception(f'sleep_seed must be a integer and not 0 , instead got: {sleep_seed}')
@@ -288,69 +288,70 @@ def validate_individual_scraper_input(video_list, verbose, headless, batch_size,
         raise Exception(f'recursion_counter must be a integer and not 0 , instead got: {recursion_counter}')
 
 
-# <codecell>
-
 def click_intro_agree_button(driver, verbose, sleep_seed):
     try:  # try to click on the intro agree button that appears sometimes
         if verbose > 2:
             print('intro agree button click attempt')
 
-        driver.switch_to.frame('iframe')  # switch to frame containing button
+        # driver.switch_to.frame('iframe')  # switch to frame containing button
         time.sleep(sleep_seed * 0.1)  # short wait to avoid detection
-        element = driver.find_element_by_xpath('//*[@id="introAgreeButton"]')  # set element to button
-        action = actions(driver)
+        element = driver.find_element_by_xpath('//*[@id="content"]/div[2]/div[5]/div[2]/ytd-button-renderer[2]/a')  # set element to button
+        action = ActionChains(driver)
         action.move_to_element(element).perform()  # move cursor to element
         element.click()  # click on button
-        driver.switch_to.default_content()  # switch back to default frame
+        # driver.switch_to.default_content()  # switch back to default frame
 
     except NoSuchElementException:
-        if verbose > 2: print('fail1 click on intro agree button NoSuchElementException')
-    except NoSuchFrameException:
-        if verbose > 2: print('fail2 click on intro agree button NoSuchFrameException')
+        if verbose > 2:
+            print('fail1 click on intro agree button NoSuchElementException')
+    except ElementNotInteractableException:
+        if verbose > 2:
+            print('fail2 click on intro agree button ElementNotInteractableException')
 
-
-# <codecell>
 
 def click_skip_button(driver, verbose, sleep_seed):
     try:
         time.sleep(sleep_seed * 0.2)  # short wait to avoid detection
-        if verbose > 2: print('skip button click attempt')
+        if verbose > 2:
+            print('skip button click attempt')
 
         element = driver.find_element_by_xpath(
             '/html/body/ytd-app/ytd-popup-container/paper-dialog/yt-upsell-dialog-renderer/div/div[3]/div[1]/yt-button-renderer/a/paper-button')  # set element to button
-        action = actions(driver)
+        action = ActionChains(driver)
         action.move_to_element(element).perform()  # move cursor to element
         element.click()  # click on button
         time.sleep(sleep_seed * 0.25)  # short wait to avoid detection
 
     except AttributeError:
-        if verbose > 2: print('fail1 click on skip button AttributeError')
+        if verbose > 2:
+            print('fail1 click on skip button AttributeError')
     except NoSuchElementException:
-        if verbose > 2: print('fail2 click on skip button NoSuchElementException')
+        if verbose > 2:
+            print('fail2 click on skip button NoSuchElementException')
     except ElementNotInteractableException:
-        if verbose > 2: print('fail3 click on skip button ElementNotInteractableException')
+        if verbose > 2:
+            print('fail3 click on skip button ElementNotInteractableException')
     except JavascriptException:
-        if verbose > 2: print('fail4 click on skip button JavascriptException')
+        if verbose > 2:
+            print('fail4 click on skip button JavascriptException')
 
-
-# <codecell>
 
 def scroll_to(driver, verbose, scroller_count, sleep_seed, force_scroll=0):
     if force_scroll != 0:
         driver.execute_script(f"window.scrollTo(0, {force_scroll})")
-        if verbose > 2: print(f'scrolling to {force_scroll}')
+        if verbose > 2:
+            print(f'scrolling to {force_scroll}')
         time.sleep(sleep_seed * 0.2)
 
     else:
         driver.execute_script(f"window.scrollTo(0, {scroller_count})")
-        if verbose > 2: print(f'scrolling to {scroller_count}')
+        if verbose > 2:
+            print(f'scrolling to {scroller_count}')
         scroller_count += 500
         time.sleep(sleep_seed * 0.2)
 
     return scroller_count
 
-
-# <codecell>
 
 def upload_date_converter(upload_date, verbose):
     for i in ['Streamed live on ', 'Live übertragen am ', 'Premiere am ']:
@@ -359,15 +360,15 @@ def upload_date_converter(upload_date, verbose):
 
     try:
         result = datetime.strptime(upload_date, '%d.%m.%Y').date()
-        if verbose > 2: print('upload_date conversion successfully')
+        if verbose > 2:
+            print('upload_date conversion successfully')
         return result
 
     except:
-        if verbose > 2: print('upload_date conversion failed')
+        if verbose > 2:
+            print('upload_date conversion failed')
         return upload_date
 
-
-# <codecell>
 
 def attempt_individual_scraping(driver, verbose):
     collected_successfully = True
@@ -386,7 +387,7 @@ def attempt_individual_scraping(driver, verbose):
 
         try:
             num_comments = int(''.join(re.findall("\d+", driver.find_element_by_xpath(
-                '//*[@id="comments"]//*[@id="count"]/yt-formatted-string/span[1]').text)))
+                '//*[@id="count"]/yt-formatted-string/span[1]').text)))
             if verbose > 1:
                 print('collected comments')
         except NoSuchElementException:
@@ -403,29 +404,42 @@ def attempt_individual_scraping(driver, verbose):
             if verbose > 1:
                 print('collected comments')
 
-        views = int(''.join(
-            re.findall("\d+", driver.find_element_by_xpath('//*[@id="count"]/yt-view-count-renderer/span[1]').text)))
-        if verbose > 1: print('collected views')
-        upload_date = driver.find_element_by_xpath('//*[@id="date"]/yt-formatted-string').text
-        if verbose > 1: print('collected upload')
+        views_element = driver.find_element_by_xpath('//*[@id="count"]/ytd-video-view-count-renderer/span[1]').text
+        if views_element != '':
+            views = int(''.join(re.findall("\d+", views_element)))
+        else:
+            views = None
+        if verbose > 1:
+            print('collected views')
+        upload_date = driver.find_element_by_xpath('//*[@id="info-strings"]/yt-formatted-string').text
+        if verbose > 1:
+            print('collected upload')
         likes = int(''.join(re.findall("\d+", driver.find_element_by_xpath(
-            '//*[@id="menu-container"]/div/ytd-menu-renderer/div/ytd-toggle-button-renderer[1]/a/yt-formatted-string').get_attribute(
+            '/html/body/ytd-app/div/ytd-page-manager/ytd-watch-flexy/div[5]/div[1]/div/div[6]/div['
+            '2]/ytd-video-primary-info-renderer/div/div/div[3]/div/ytd-menu-renderer/div/ytd-toggle-button-renderer['
+            '1]/a/yt-formatted-string').get_attribute(
             'aria-label'))))
         if verbose > 1:
             print('collected likes')
         dislikes_element = driver.find_element_by_xpath(
-            '//*[@id="menu-container"]/div/ytd-menu-renderer/div/ytd-toggle-button-renderer[2]/a/yt-formatted-string').get_attribute(
+            '/html/body/ytd-app/div/ytd-page-manager/ytd-watch-flexy/div[5]/div[1]/div/div[6]/div['
+            '2]/ytd-video-primary-info-renderer/div/div/div[3]/div/ytd-menu-renderer/div/ytd-toggle-button-renderer['
+            '2]/a/yt-formatted-string').get_attribute(
             'aria-label')
         dislikes_int = False
-        for char in dislikes_element:
-            if char.isdigit():
-                dislikes_int = True
-        if dislikes_int:
-            dislikes = int(float(''.join(re.findall("\d+", dislikes_element))))
-        else:
-            dislikes = 0
-        if verbose > 1:
-            print('collected dislikes')
+        try:
+            for char in dislikes_element:
+                if char.isdigit():
+                    dislikes_int = True
+            if dislikes_int:
+                dislikes = int(float(''.join(re.findall("\d+", dislikes_element))))
+            else:
+                dislikes = 0
+            if verbose > 1:
+                print('collected dislikes')
+        except TypeError:
+            if verbose > 1:
+                print('failed dislike collection')
 
     except NoSuchElementException as e:
         if verbose > 1:
@@ -439,20 +453,17 @@ def attempt_individual_scraping(driver, verbose):
     return num_comments, views, upload_date, likes, dislikes, collected_successfully
 
 
-# <codecell>
-
 def check_for_scraping_failure(video, verbose, start_time, failed_videos, timeout):
     if time.time() - start_time > timeout:
         failed_videos.append(video)
-        if verbose > 0: print('added to failed_video list')
+        if verbose > 0:
+            print('added to failed_video list')
         break_loop = True
     else:
         break_loop = False
 
     return failed_videos, break_loop
 
-
-# <codecell>
 
 def assign_individual_video_data(video, num_comments, views, upload_date, likes, dislikes):
     video.views = views  # save collected views to video obj
@@ -464,8 +475,6 @@ def assign_individual_video_data(video, num_comments, views, upload_date, likes,
 
     return video
 
-
-# <codecell>
 
 def individual_scraper_report(collected_video_list, not_collected_video_list, video_list, recursion_counter, verbose,
                               total_time):
@@ -484,9 +493,8 @@ def individual_scraper_report(collected_video_list, not_collected_video_list, vi
     print(f'{50 * "_"}')
 
 
-# <codecell>
-
-def check_missing_data(video_list, ID=True,
+def check_missing_data(video_list,
+                       ID=True,
                        channel_name=True,
                        channel_link=True,
                        video_title=True,
@@ -548,20 +556,16 @@ def check_missing_data(video_list, ID=True,
     return missing_list
 
 
-# <codecell>
-
 def save_individual_scraper_for_recovery(index, collected_video_list, not_collected_video_list, batch_size):
     if batch_size != 0 and len(collected_video_list) != 0:
         if len(collected_video_list) % batch_size == 0:
             func.pickle_video_list(collected_video_list,
-                                   path='C:/Users/Tommer/Google Drive/Data science/Projects/Youtube Predictor/Data_colection_prepro/data recovery',
+                                   path=os.getcwd() + '\\Data_colection_prepro\\data recovery',
                                    file_name=f'{collected_video_list[0].channel_name}-individual_video_recovery{date.today()}.pkl')
         if len(not_collected_video_list) != 0:
             func.pickle_video_list(not_collected_video_list,
-                                   path='C:/Users/Tommer/Google Drive/Data science/Projects/Youtube Predictor/Data_colection_prepro/data recovery',
+                                   path=os.getcwd() + '\\Data_colection_prepro\\data recovery',
                                    file_name=f'{not_collected_video_list[0].channel_name}-individual_failed_video_recovery{date.today()}.pkl')
-
-        # <codecell>
 
 
 def dummy_video(driver, verbose, sleep_seed):

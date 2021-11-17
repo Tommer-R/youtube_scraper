@@ -57,6 +57,9 @@ def get_basic_video_data(channel_link, num_videos=0, verbose=False, headless=Tru
     if num_videos == 0:
         num_videos = 1000000
 
+    # try to click on "agree" button that sometimes appears
+    sf.click_intro_agree_button_basic(driver, verbose, sleep_seed=3)
+
     # set counter for auto_stop
     time_out_count = 0
 
@@ -69,14 +72,14 @@ def get_basic_video_data(channel_link, num_videos=0, verbose=False, headless=Tru
         temp_video = sf.assign_basic_values(channel_link, title, link, thumbnail, length, stream, i)
 
         # print the collected data
-        sf.print_cellected(verbose, temp_video, collected_successfully, print_level='basic')
+        sf.print_collected(verbose, temp_video, collected_successfully, print_level='basic')
 
         # add the video to the return list
         if collected_successfully:
             video_list.append(temp_video)
             time_out_count = 0
 
-        # add the video to the unsuccessfully list
+        # add the video to the failed list
         if not collected_successfully:
             failed_videos.append(temp_video)
             time_out_count += 1
@@ -87,17 +90,12 @@ def get_basic_video_data(channel_link, num_videos=0, verbose=False, headless=Tru
         # break loop if 5 timeouts
         if time_out_count > 4:
             break
-
     sf.save_basic_scraper_for_recovery(100, video_list, failed_videos, save_every, verbose, force=True)
     driver.quit()
 
     # print report
     sf.basic_scraper_report(video_list, failed_videos, num_videos, total_time)
-
     return video_list, failed_videos
-
-
-# <codecell>
 
 
 def individual_scraper(video_list, verbose=0, headless=False, batch_size=25, sleep_seed=1, recursion_counter=0,
@@ -168,7 +166,7 @@ def individual_scraper(video_list, verbose=0, headless=False, batch_size=25, sle
     # create temporary list of successfully and unsuccessfully scraped videos
     collected_video_list, not_collected_video_list, temp_failed_list = [], [], []
 
-    sf.dummy_video(driver, verbose, sleep_seed)
+    # sf.dummy_video(driver, verbose, sleep_seed)
 
     for video in progressbar.progressbar(video_list):
 
@@ -182,6 +180,9 @@ def individual_scraper(video_list, verbose=0, headless=False, batch_size=25, sle
 
         time.sleep(sleep_seed * randint(1, 2))  # wait random time to avoid detection
         driver.get(video.video_link)  # open video link
+
+        if verbose > 0:
+            print(f'get {video.video_link}')
 
         collected_successfully = False  # set var to monitor data collection
 
@@ -213,7 +214,7 @@ def individual_scraper(video_list, verbose=0, headless=False, batch_size=25, sle
                     print('added video to collected_video_list')
 
                 # print collected data if required
-                sf.print_cellected(verbose, new_video, collected_successfully, print_level='individual')
+                sf.print_collected(verbose, new_video, collected_successfully, print_level='individual')
 
     driver.quit()  # quite the driver process
     time.sleep(sleep_seed * 10)  # wait 30 seconds before recursion

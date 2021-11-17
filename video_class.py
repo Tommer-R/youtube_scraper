@@ -74,7 +74,7 @@ class Video:
     def up_for(self):
         if self.upload_date == '':
             return -1
-        
+
         else:
             x = self.scraped_date - self.upload_date
             return x.days
@@ -252,7 +252,7 @@ class Video:
                         num_comments=True,
                         upload_date=True,
                         scraped_date=True,
-                        up_for = True,
+                        up_for=True,
                         like_ratio=True,
                         transcript=True,
                         comments=True,

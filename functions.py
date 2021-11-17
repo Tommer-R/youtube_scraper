@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Feb  5 10:03:40 2021
-
-@author: Tommer
-"""
-
-# from datetime import datetime
 import datetime
 import pickle
 import random
@@ -16,8 +8,6 @@ import progressbar
 
 import scrapers_functions as sf
 
-
-# <codecell>
 
 def check_dupes(data, try_fix=True, return_log=False):
     # check that all of the objects are videos
@@ -56,8 +46,6 @@ def check_dupes(data, try_fix=True, return_log=False):
         return data
 
 
-# <codecell>
-
 def data_validity_report(log, dupes_log, try_fix):
     if len(log) == 1:
 
@@ -85,8 +73,6 @@ def data_validity_report(log, dupes_log, try_fix):
         print(f'Dupe links: {len(dupes_log["link dupes"])}')
         print(f'{50 * "_"}')
 
-
-# <codecell>
 
 def validate_data_df_log(log):
     if len(log) == 1:
@@ -148,8 +134,6 @@ def validate_data_df_log(log):
         raise TypeError(f'log length is {len(log)}')
     return result
 
-
-# <codecell>
 
 def validate_data(data, try_fix=True, print_report=True, return_log=False, return_df=True):
     """
@@ -397,8 +381,6 @@ def validate_data(data, try_fix=True, print_report=True, return_log=False, retur
         return result_data
 
 
-# <codecell>
-
 # create a pandas DataFrame from a list of Video objects
 def create_dataframe(video_list,
                      i_d=True,
@@ -448,15 +430,11 @@ def create_dataframe(video_list,
     return result
 
 
-# <codecell>
-
 def pickle_video_list(video_list, file_name, path):
-    with open(f'{path}/{file_name}', 'wb') as file:
+    with open(f'{path}\\{file_name}', 'wb') as file:
         pickle.dump(video_list, file)
         file.close()
 
-
-# <codecell>
 
 def srt_to_str(file):
     string1 = str(file.read())
@@ -473,8 +451,6 @@ def srt_to_str(file):
 
     return result
 
-
-# <codecell>
 
 def attach_transcripts(video_list, path='Data/transcripts'):
     entries = os.listdir(path)
@@ -507,8 +483,6 @@ def attach_transcripts(video_list, path='Data/transcripts'):
 
     return result
 
-
-# <codecell>
 
 def gen_link_list(video_list, path, size=1000):
     link_list = open(f'{path}/link list_0.txt', 'w')
